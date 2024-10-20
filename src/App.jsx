@@ -1,18 +1,30 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Guitar from "./components/Guitar"
 import Header from "./components/Header"
 import { db } from "./data/db"
 
 function App() {
 
-  const [data, setData] = useState(db)
-  const [cart, setCart] = useState([])
+  const initialCart = () => {
+    const localStorageCart = localStorage.getItem('cart')
+    return localStorageCart ? JSON.parse(localStorageCart) : []
+  }
+  const [data] = useState(db)
+  const [cart, setCart] = useState(initialCart)
   const [isCartVisible, setIsCartVisible] = useState(false) // New state for cart visibility
+
+  const MAX_ITEMS = 5
+  const MIN_ITEMS = 1
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart))
+  }, [cart])
 
   function addToCart(item) {
     const itemExists = cart.findIndex(guitar => guitar.id === item.id
     )
     if(itemExists >= 0) {
+      if(cart[itemExists].quantity >= MAX_ITEMS) return
       const updatedCart = [...cart]
       updatedCart[itemExists].quantity++
       setCart(updatedCart)
@@ -27,16 +39,46 @@ function App() {
     setCart(prevCart => prevCart.filter(guitar => guitar.id != id))
   }
 
-  // function increaseQuantity(id) {
-  //   console.log("Incrementando", id);
-    
-  // }
+  function increaseQuantity(id) {
+    const updatedCart = cart.map( item => {
+      if(item.id === id && item.quantity < MAX_ITEMS) {
+        return {
+          ...item,
+          quantity: item.quantity + 1 
+        }
+      }
+      return item
+    })
+    setCart(updatedCart)
+  }
+
+  function decreaseQuantity(id) {
+    const updateCart = cart.map (item => {
+      if(item.id === id && item.quantity > MIN_ITEMS){
+        return {
+          ...item,
+          quantity: item.quantity -1
+        }
+      }
+      return item
+    })
+    setCart(updateCart)
+  }
+
+  function clearCart() {
+    setCart([])
+  }
+
+
 
   return (
     <>
     <Header 
       cart={cart}
       removeFromCart={removeFromCart}
+      increaseQuantity={increaseQuantity}
+      decreaseQuantity={decreaseQuantity}
+      clearCart={clearCart}
       isCartVisible={isCartVisible} // Pass the cart visibility state to Header
       setIsCartVisible={setIsCartVisible}
     />
