@@ -1,75 +1,22 @@
-import { useEffect, useState } from "react"
 import Guitar from "./components/Guitar"
 import Header from "./components/Header"
-import { db } from "./data/db"
+import { useCart } from "./hooks/useCart"
 
 function App() {
 
-  const initialCart = () => {
-    const localStorageCart = localStorage.getItem('cart')
-    return localStorageCart ? JSON.parse(localStorageCart) : []
-  }
-  const [data] = useState(db)
-  const [cart, setCart] = useState(initialCart)
-  const [isCartVisible, setIsCartVisible] = useState(false) // New state for cart visibility
-
-  const MAX_ITEMS = 5
-  const MIN_ITEMS = 1
-
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart))
-  }, [cart])
-
-  function addToCart(item) {
-    const itemExists = cart.findIndex(guitar => guitar.id === item.id
-    )
-    if(itemExists >= 0) {
-      if(cart[itemExists].quantity >= MAX_ITEMS) return
-      const updatedCart = [...cart]
-      updatedCart[itemExists].quantity++
-      setCart(updatedCart)
-    } else {
-      item.quantity = 1
-      setCart([...cart, item])
-    }
-    setIsCartVisible(true) // Show cart when an item is added
-  }
-
-  function removeFromCart(id) {
-    setCart(prevCart => prevCart.filter(guitar => guitar.id != id))
-  }
-
-  function increaseQuantity(id) {
-    const updatedCart = cart.map( item => {
-      if(item.id === id && item.quantity < MAX_ITEMS) {
-        return {
-          ...item,
-          quantity: item.quantity + 1 
-        }
-      }
-      return item
-    })
-    setCart(updatedCart)
-  }
-
-  function decreaseQuantity(id) {
-    const updateCart = cart.map (item => {
-      if(item.id === id && item.quantity > MIN_ITEMS){
-        return {
-          ...item,
-          quantity: item.quantity -1
-        }
-      }
-      return item
-    })
-    setCart(updateCart)
-  }
-
-  function clearCart() {
-    setCart([])
-  }
-
-
+  const {
+    data,
+    cart,
+    addToCart,
+    removeFromCart,
+    decreaseQuantity,
+    increaseQuantity,
+    clearCart,
+    isCartVisible,
+    setIsCartVisible,
+    isEmpty,
+    cartTotal
+  } = useCart()
 
   return (
     <>
@@ -81,6 +28,8 @@ function App() {
       clearCart={clearCart}
       isCartVisible={isCartVisible} // Pass the cart visibility state to Header
       setIsCartVisible={setIsCartVisible}
+      isEmpty={isEmpty}
+      cartTotal={cartTotal}
     />
     
     <main className="container-xl mt-5">
@@ -92,7 +41,6 @@ function App() {
               <Guitar 
                 key={guitar.id}
                 guitar={guitar}
-                setCart={setCart}
                 addToCart={addToCart}
               />
             )
